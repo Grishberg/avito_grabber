@@ -4,6 +4,11 @@ import requests
 import urllib
 import json
 from datetime import *
+from db_provider import *
+import response_fields as rf
+import merger
+
+RUB = u' руб'
 
 TODAY = u'Сегодня'
 YESTERDAY = u'Вчера'
@@ -32,14 +37,30 @@ def get_geo_by_address(street_name):
 
 
 def get_page_data(html):
+    result = []
     soup = BeautifulSoup(html, 'lxml')
-    ''
     ads = soup.find('div', class_='catalog-list').find_all('div', class_='item_table')
     for ad in ads:
-        data = parse_ad(ad)
-        geocode = get_geo_by_address(data['address'])
-        pos = extract_geo_coords(geocode)
-        print pos
+        result.append(Apartment(parse_ad(ad)))
+    return result
+
+
+def parse_price(price):
+    lst = price.split(RUB)
+    try:
+        if len(lst[1]) > 0:
+            lst_fee = lst[1].split("\n\n")
+            if len(lst_fee) > 0:
+                fee_str = lst_fee[1][:-1]
+                fee = int(fee_str)
+    except:
+        fee = 0
+
+    try:
+        price_rub_str = lst[0].replace(' ', '')
+    except:
+        price_rub_str = '0'
+    return (int(price_rub_str), fee)
 
 
 def parse_ad(ad):
@@ -53,8 +74,10 @@ def parse_ad(ad):
 
     try:
         price = ad.find('div', class_='about').text.strip()
+        price_rub, price_fee = parse_price(price)
     except:
-        price = ''
+        price_rub = 0
+        price_fee = 0
 
     try:
         address_element = ad.find('p', class_='address')
@@ -65,25 +88,29 @@ def parse_ad(ad):
         address_parts = address_str.split(metro_distance)
         address = address_parts[1].replace(",", "").strip()
         metro = address_parts[0]
-        time = time_str_to_datetime(ad.find('div', class_='c-2').text.strip())
-
     except:
         address = ''
         metro_distance = ''
         metro = ''
+
+    try:
+        time = time_str_to_datetime(ad.find('div', class_='c-2').text.strip())
+    except:
         time = ''
 
-    data = {'title': title,
-            'url': url,
-            'price': price,
-            'address': address,
-            'metro': metro,
-            'metroDistance': metro_distance,
-            'time': time}
-    print time, title, url, price
-    print address
-    print metro
-    print metro_distance
+    geocode = get_geo_by_address(address)
+    pos = extract_geo_coords(geocode)
+
+    data = {rf.TITLE: title,
+            rf.URL: url,
+            rf.PRICE: price_rub,
+            rf.PRICE_FEE: price_fee,
+            rf.ADDRESS: address,
+            rf.METRO: metro,
+            rf.METRO_DISTANCE: metro_distance,
+            rf.DATE: time,
+            rf.POS_L: float(pos[0]),
+            rf.POS_W: float(pos[1])}
     return data
 
 
@@ -102,8 +129,7 @@ def time_str_to_datetime(time_str):
                         yesterday_time.month,
                         yesterday_time.day,
                         time_array[0], time_array[1], 0, 0)
-
-    time_lst = time_str.split(u' ')
+    time_lst = time_str.split()
     day_str = int(time_lst[0])
     month_index = get_month_from_str(time_lst[1])
     time_array = parse_time(time_lst[2].strip())
@@ -147,8 +173,24 @@ def extract_geo_coords(payload):
 
 
 if __name__ == '__main__':
-    # html = grab_page(
-    #    'https://www.avito.ru/sankt-peterburg/kvartiry/sdam/na_dlitelnyy_srok?pmax=23000&pmin=0&metro=157-160-176-191-210&f=550_5702-5703')
+    html = grab_page(
+        'https://www.avito.ru/sankt-peterburg/kvartiry/sdam/na_dlitelnyy_srok?pmax=23000&pmin=0&metro=157-160-176-191-210&f=550_5702-5703')
 
-    html = open_html_from_cache()
-    get_page_data(html)
+    # html = open_html_from_cache()
+    new_ads_list = get_page_data(html)
+
+    db = DbService()
+    # new_count = db.add_ads(ads_list)
+    # print new_count
+    cached_data_list = db.get_ads()
+
+    new_items = merger.find_new_ads(new_ads_list, cached_data_list)
+    if len(new_items) > 0:
+        db.add_ads(new_items)
+
+    print "new ads:"
+    for ad in new_items:
+        print '   ', ad.data
+
+    print len(cached_data_list)
+    db.close()
