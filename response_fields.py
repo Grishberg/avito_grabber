@@ -14,6 +14,7 @@ TOKEN = "token"
 
 ID = "id"
 URL = "url"
+PHOTO = "photo"
 ADDRESS = "address"
 METRO = "metro"
 METRO_DISTANCE = "metro_distance"

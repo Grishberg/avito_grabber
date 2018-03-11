@@ -50,7 +50,8 @@ class DbService:
                                          rf.DATE: row[8]}))
             return result
         except Exception as e:
-            print ("Error: unable to fecth data, " + str(e))
+            error_str = str(e)
+            print ("Error: unable to fecth data, " + error_str)
             return None
         finally:
             self.close()
@@ -60,27 +61,58 @@ class DbService:
 
     def add_ads(self, ads_list):
         self.get_connection()
-        added_count = 0
+        ids = []
         for item in ads_list:
             ad = item.data
             sql = ("INSERT INTO apartments "
-                   "(url, title, address, metro, metro_distance, price, pos_l, pos_w, date) "
-                   "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)")
-            data = (ad[rf.URL], ad[rf.TITLE], ad[rf.ADDRESS], ad[rf.METRO], ad[rf.METRO_DISTANCE],
-                    ad[rf.PRICE], ad[rf.POS_L], ad[rf.POS_W], ad[rf.DATE])
+                   "(url, photo, title, address, metro, metro_distance, price, fee, pos_l, pos_w, date) "
+                   "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)")
+            data = (ad[rf.URL], ad[rf.PHOTO], ad[rf.TITLE], ad[rf.ADDRESS], ad[rf.METRO], ad[rf.METRO_DISTANCE],
+                    ad[rf.PRICE], ad[rf.PRICE_FEE], ad[rf.POS_L], ad[rf.POS_W], ad[rf.DATE])
             try:
                 # Execute the SQL command
                 self.cursor.execute(sql, data)
-                result_id = self.cursor.lastrowid
+                ids.append(self.cursor.lastrowid)
                 self.db.commit()
-                added_count += 1
 
             except Exception as e:
                 self.db.rollback()
-                print ("Error: unable to insert data, " + str(e))
+                error_str = str(e)
+                if error_str.find("duplicate") > 0:
+                    self.udpate_apartment_by_url(ad[rf.URL], ad[rf.DATE])
+                print ("Error: unable to insert data, " + error_str)
 
         self.close()
-        return added_count
+        return ids
 
     def clear(self):
         pass
+
+    def udpate_apartment_by_url(self, url, date):
+        update_sql = "UPDATE apartments SET date = %s WHERE url = %s"
+        update_data = (date, url)
+        try:
+            # Execute the SQL command
+            self.cursor.execute(update_sql, update_data)
+            self.db.commit()
+            return self.get_id_by_url(url)
+        except Exception as e:
+            self.db.rollback()
+            error_str = str(e)
+            print ("Error: unable to insert data, " + error_str)
+
+    def get_id_by_url(self, url):
+        sql = "SELECT id FROM apartments WHERE url = %s"
+        data = (url)
+        try:
+            # Execute the SQL command
+            self.cursor.execute(sql, data)
+            # Fetch all the rows in a list of lists.
+            rows = self.cursor.fetchall()
+            for row in rows:
+                return row[0]
+
+        except Exception as e:
+            self.db.rollback()
+            error_str = str(e)
+            print ("Error: unable to insert data, " + error_str)

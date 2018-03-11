@@ -2,14 +2,15 @@
 CREATE TABLE apartments (
     id int NOT NULL AUTO_INCREMENT,
     url varchar(255) NOT NULL UNIQUE,
+    photo varchar(255),
     title varchar(64) NOT NULL,
-    address varchar(64) NOT NULL,
+    address varchar(255) NOT NULL,
     metro varchar(64) NOT NULL,
     metro_distance varchar(64) NOT NULL,
     price int NOT NULL,
     fee int NOT NULL,
-    pos_l float NOT NULL,
-    pos_w float NOT NULL,
+    pos_l float,
+    pos_w float,
     date TIMESTAMP NOT NULL,
     CONSTRAINT apartments_pk PRIMARY KEY (id)
 ) COMMENT 'Список объявлений';
