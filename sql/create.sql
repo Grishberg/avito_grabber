@@ -18,10 +18,24 @@ CREATE TABLE apartments (
 -- Table: user
 CREATE TABLE users (
     id int NOT NULL AUTO_INCREMENT,
-    ean varchar(255) NOT NULL,
     name varchar(255) NOT NULL UNIQUE,
     password varchar(64) NOT NULL,
     token varchar(64) NOT NULL,
     timestamp TIMESTAMP NOT NULL,
     CONSTRAINT user_pk PRIMARY KEY (id)
+) COMMENT 'Список пользователей';
+
+-- Table: circuits
+CREATE TABLE circuits (
+    id int NOT NULL AUTO_INCREMENT,
+    user_id int
+    CONSTRAINT circuits_pk PRIMARY KEY (id)
+) COMMENT 'Список районов для поиска';
+
+-- Table: circuits_points
+CREATE TABLE points (
+    id int NOT NULL AUTO_INCREMENT,
+    circuits_id int NOT NULL,
+    pos_l float NOT NULL,
+    pos_w float NOT NULL
 ) COMMENT 'Список пользователей';

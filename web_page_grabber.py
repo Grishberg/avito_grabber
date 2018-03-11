@@ -110,7 +110,6 @@ def parse_ad(ad):
             rf.METRO: metro,
             rf.METRO_DISTANCE: metro_distance,
             rf.DATE: time}
-    print 'found', title, price_rub, url
     return data
 
 
@@ -263,5 +262,6 @@ if __name__ == '__main__':
 
         ids = db.add_ads(new_items)
         print 'added count:', len(ids)
+        break
 
     db.close()
