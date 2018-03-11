@@ -1,3 +1,7 @@
+CREATE DATABASE apart
+  DEFAULT CHARACTER SET utf8
+  DEFAULT COLLATE utf8_general_ci;
+
 -- Table: apartments
 CREATE TABLE apartments (
     id int NOT NULL AUTO_INCREMENT,

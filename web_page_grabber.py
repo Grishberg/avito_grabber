@@ -262,6 +262,6 @@ if __name__ == '__main__':
 
         ids = db.add_ads(new_items)
         print 'added count:', len(ids)
-        break
 
     db.close()
+    print 'done.'
