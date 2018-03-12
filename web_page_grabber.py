@@ -216,7 +216,8 @@ def check_new_ads():
     total_pages_count = find_pages_count(soup)
 
     db = DbService()
-    cached_data_list = db.get_ads()
+    min_date = datetime.today() - timedelta(days=5)
+    cached_data_list = db.get_ads(min_date)
 
     for page_index in range(total_pages_count):
         if page_index > 0:
@@ -243,7 +244,8 @@ if __name__ == '__main__':
     print 'total pages count:', total_pages_count
 
     db = DbService()
-    cached_data_list = db.get_ads()
+    min_date = datetime.today() - timedelta(days=5)
+    cached_data_list = db.get_ads(min_date)
     print 'cached data list:', len(cached_data_list)
 
     for page_index in range(total_pages_count):

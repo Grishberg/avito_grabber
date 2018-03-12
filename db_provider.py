@@ -7,6 +7,7 @@ import response_fields as rf
 from config import *
 from Apartment import *
 from range_checker import Point
+from datetime import *
 
 
 # Класс работы с бд
@@ -36,11 +37,12 @@ class DbService:
         return self.db
 
     # API
-    def get_ads(self):
+    def get_ads(self, min_date):
         self.get_connection()
         sql = "SELECT url, title, address, metro, metro_distance, price, pos_l, pos_w, date"
-        sql += " FROM apartments ORDER BY date DESC;"
-        data = []
+        sql += " FROM apartments "
+        sql += " WHERE date >= %s ORDER BY date DESC;"
+        data = [min_date]
         result = []
         try:
             # Execute the SQL command
@@ -83,7 +85,7 @@ class DbService:
                 self.db.rollback()
                 error_str = str(e)
                 if error_str.find("duplicate") > 0:
-                    self.udpate_apartment_by_url(ad[rf.URL], ad[rf.DATE])
+                    self.update_apartment_by_url(ad[rf.URL], ad[rf.DATE])
                 print ("Error: unable to insert data, " + error_str)
 
         self.close()
@@ -92,7 +94,7 @@ class DbService:
     def clear(self):
         pass
 
-    def udpate_apartment_by_url(self, url, date):
+    def update_apartment_by_url(self, url, date):
         update_sql = "UPDATE apartments SET date = %s WHERE url = %s"
         update_data = (date, url)
         try:
@@ -107,7 +109,7 @@ class DbService:
 
     def get_id_by_url(self, url):
         sql = "SELECT id FROM apartments WHERE url = %s"
-        data = (url)
+        data = [url]
         try:
             # Execute the SQL command
             self.cursor.execute(sql, data)

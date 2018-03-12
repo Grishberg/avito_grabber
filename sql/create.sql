@@ -9,7 +9,7 @@ CREATE TABLE apartments (
     id int NOT NULL AUTO_INCREMENT,
     url varchar(255) NOT NULL UNIQUE,
     photo varchar(255),
-    title varchar(64) NOT NULL,
+    title varchar(255) NOT NULL,
     address varchar(255) NOT NULL,
     metro varchar(64) NOT NULL,
     metro_distance varchar(64) NOT NULL,

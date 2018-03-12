@@ -3,7 +3,7 @@
 from range_checker import *
 import response_fields as rf
 from db_provider import *
-
+from datetime import *
 ADD_TEST_RANGE = False
 
 
@@ -12,9 +12,9 @@ class CircuitsManager:
         self.db = db
         self.checker = InsideChecker()
 
-    def get_apartments_inside_circuits(self, user_id):
+    def get_apartments_inside_circuits(self, user_id, min_date):
         print 'get ads'
-        cached_ads = self.db.get_ads()
+        cached_ads = self.db.get_ads(min_date)
         print 'ads size:', len(cached_ads)
 
         ranges_set = self.db.get_circuits(user_id)
@@ -53,7 +53,8 @@ if __name__ == '__main__':
         test_add_circuit(db)
 
     manager = CircuitsManager(db)
-    res = manager.get_apartments_inside_circuits(1)
+    min_date = datetime.today() - timedelta(days=5)
+    res = manager.get_apartments_inside_circuits(1, min_date)
     print 'res', len(res)
 
     for r in res:
