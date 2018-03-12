@@ -84,7 +84,7 @@ class DbService:
             except Exception as e:
                 self.db.rollback()
                 error_str = str(e)
-                if error_str.find("duplicate") > 0:
+                if error_str.find("Duplicate") > 0:
                     self.update_apartment_by_url(ad[rf.URL], ad[rf.DATE])
                 print ("Error: unable to insert data, " + error_str)
 

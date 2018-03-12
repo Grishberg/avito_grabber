@@ -42,11 +42,13 @@ def get_geo_by_address(street_name):
     return r.text
 
 
-def parse_page(soup):
+def parse_page(soup, min_date):
     result = []
     ads = soup.find('div', class_='catalog-list').find_all('div', class_='item_table')
     for ad in ads:
-        result.append(Apartment(parse_ad(ad)))
+        parsed_data = Apartment(parse_ad(ad))
+        if parsed_data.data[rf.DATE] >= min_date:
+            result.append(parsed_data)
     return result
 
 
@@ -216,14 +218,15 @@ def check_new_ads():
     total_pages_count = find_pages_count(soup)
 
     db = DbService()
-    min_date = datetime.today() - timedelta(days=5)
+    min_date = datetime.today() - timedelta(days=10)
+    min_date_for_web = datetime.today() - timedelta(days=5)
     cached_data_list = db.get_ads(min_date)
 
     for page_index in range(total_pages_count):
         if page_index > 0:
             html = grab_page_from_web(page_index + 1)
             soup = BeautifulSoup(html, 'lxml')
-        new_ads_list = parse_page(soup)
+        new_ads_list = parse_page(soup, min_date_for_web)
 
         new_items = merger.find_new_ads(new_ads_list, cached_data_list)
         populate_items_with_geo_location(new_items)
@@ -244,7 +247,8 @@ if __name__ == '__main__':
     print 'total pages count:', total_pages_count
 
     db = DbService()
-    min_date = datetime.today() - timedelta(days=5)
+    min_date = datetime.today() - timedelta(days=6)
+    min_date_for_web = datetime.today() - timedelta(days=5)
     cached_data_list = db.get_ads(min_date)
     print 'cached data list:', len(cached_data_list)
 
@@ -253,7 +257,11 @@ if __name__ == '__main__':
         if page_index > 0:
             html = grab_page_from_web(page_index + 1)
             soup = BeautifulSoup(html, 'lxml')
-        new_ads_list = parse_page(soup)
+        new_ads_list = parse_page(soup, min_date_for_web)
+
+        if len(new_ads_list) == 0:
+            print 'no new data'
+            break
 
         new_items = merger.find_new_ads(new_ads_list, cached_data_list)
         print 'new items count:', len(new_items)
