@@ -1,6 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8
-from range_chacker import *
+from range_checker import *
 import response_fields as rf
 from db_provider import *
 

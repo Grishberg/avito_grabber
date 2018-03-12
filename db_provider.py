@@ -6,7 +6,7 @@ import sys, traceback
 import response_fields as rf
 from config import *
 from Apartment import *
-from range_chacker import Point
+from range_checker import Point
 
 
 # Класс работы с бд
