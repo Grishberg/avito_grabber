@@ -2,6 +2,8 @@ CREATE DATABASE apart
   DEFAULT CHARACTER SET utf8
   DEFAULT COLLATE utf8_general_ci;
 
+USE apart;
+
 -- Table: apartments
 CREATE TABLE apartments (
     id int NOT NULL AUTO_INCREMENT,
@@ -28,6 +30,8 @@ CREATE TABLE users (
     timestamp TIMESTAMP NOT NULL,
     CONSTRAINT user_pk PRIMARY KEY (id)
 ) COMMENT 'Список пользователей';
+
+INSERT INTO users (name, password, token) VALUES ('admin', '', '');
 
 -- Table: circuits
 CREATE TABLE circuits (

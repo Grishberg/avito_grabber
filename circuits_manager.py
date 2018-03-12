@@ -4,7 +4,7 @@ from range_chacker import *
 import response_fields as rf
 from db_provider import *
 
-ADD_TEST_RANGE = True
+ADD_TEST_RANGE = False
 
 
 class CircuitsManager:
