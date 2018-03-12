@@ -1,17 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8
 
-import json
 import MySQLdb
 import sys, traceback
 import response_fields as rf
 from config import *
 from Apartment import *
+from range_chacker import Point
 
 
 # Класс работы с бд
 class DbService:
     def __init__(self):
+        self._closed = True
         # подключаемся к базе данных (не забываем указать кодировку, а то в базу запишутся иероглифы)
         self.db = MySQLdb.connect(host=DBHOST, user=DBUSER, passwd=DBPASS, db=DB, charset='utf8')
         # формируем курсор, с помощью которого можно исполнять SQL-запросы
@@ -19,21 +20,24 @@ class DbService:
 
     # закрываем соединение с базой данных
     def close(self):
+        if self._closed:
+            return
         try:
             self.db.close()
+            self._closed = True
         except Exception as e:
             print e
 
     def get_connection(self):
-        self.db = MySQLdb.connect(host=DBHOST, user=DBUSER, passwd=DBPASS, db=DB, charset='utf8')
-        self.cursor = self.db.cursor()
+        if self._closed:
+            self.db = MySQLdb.connect(host=DBHOST, user=DBUSER, passwd=DBPASS, db=DB, charset='utf8')
+            self.cursor = self.db.cursor()
+            self._closed = False
         return self.db
-
-    def store_to_db(self, list_data):
-        pass
 
     # API
     def get_ads(self):
+        self.get_connection()
         sql = "SELECT url, title, address, metro, metro_distance, price, pos_l, pos_w, date"
         sql += " FROM apartments ORDER BY date DESC;"
         data = []
@@ -116,3 +120,90 @@ class DbService:
             self.db.rollback()
             error_str = str(e)
             print ("Error: unable to insert data, " + error_str)
+
+    # points as list of Point
+    def add_circuit(self, user_id, points):
+        self.get_connection()
+        circuit_id = self._add_circuit(user_id)
+        if circuit_id == 0:
+            return None
+        id = 0
+        for point in points:
+            sql = ("INSERT INTO points "
+                   "(circuits_id, pos_w, pos_l) "
+                   "VALUES (%s, %s, %s)")
+            data = (circuit_id, point.x, point.y)
+            try:
+                # Execute the SQL command
+                self.cursor.execute(sql, data)
+                id = self.cursor.lastrowid
+                self.db.commit()
+
+            except Exception as e:
+                self.db.rollback()
+                error_str = str(e)
+
+                print ("Error: unable to insert data, " + error_str)
+
+        self.close()
+        return id
+
+    def _add_circuit(self, user_id):
+        id = 0
+
+        sql = ("INSERT INTO circuits "
+               "(user_id) "
+               "VALUES (%s)")
+        data = [user_id]
+        try:
+            # Execute the SQL command
+            self.cursor.execute(sql, data)
+            id = self.cursor.lastrowid
+            self.db.commit()
+
+        except Exception as e:
+            self.db.rollback()
+            error_str = str(e)
+            print ("Error: unable to insert data, " + error_str)
+        return id
+
+    def get_circuits(self, user_id):
+        self.get_connection()
+        sql = "SELECT id FROM circuits WHERE user_id = %s;"
+        data = [user_id]
+        ids = []
+        try:
+            # Execute the SQL command
+            self.cursor.execute(sql, data)
+            # Fetch all the rows in a list of lists.
+            rows = self.cursor.fetchall()
+            for row in rows:
+                ids.append(row[0])
+
+        except Exception as e:
+            error_str = str(e)
+            print ("Error: unable to insert data, " + error_str)
+
+        circuits = []
+        for id in ids:
+            circuits.append(self._get_points_for_circuit_id(id))
+
+        self.close()
+        return circuits
+
+    def _get_points_for_circuit_id(self, id):
+        sql = "SELECT pos_w, pos_l FROM points WHERE circuits_id = %s"
+        data = [id]
+        points = []
+        try:
+            # Execute the SQL command
+            self.cursor.execute(sql, data)
+            # Fetch all the rows in a list of lists.
+            rows = self.cursor.fetchall()
+            for row in rows:
+                points.append(Point(row[0], row[1]))
+
+        except Exception as e:
+            error_str = str(e)
+            print ("Error: unable to insert data, " + error_str)
+        return points

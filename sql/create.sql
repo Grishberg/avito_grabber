@@ -32,7 +32,7 @@ CREATE TABLE users (
 -- Table: circuits
 CREATE TABLE circuits (
     id int NOT NULL AUTO_INCREMENT,
-    user_id int
+    user_id int,
     CONSTRAINT circuits_pk PRIMARY KEY (id)
 ) COMMENT 'Список районов для поиска';
 
@@ -41,5 +41,14 @@ CREATE TABLE points (
     id int NOT NULL AUTO_INCREMENT,
     circuits_id int NOT NULL,
     pos_l float NOT NULL,
-    pos_w float NOT NULL
+    pos_w float NOT NULL,
+    CONSTRAINT points_pk PRIMARY KEY (id)
 ) COMMENT 'Список пользователей';
+
+
+-- foreign keys
+ALTER TABLE circuits ADD CONSTRAINT circuits_user FOREIGN KEY circuits_user (user_id)
+    REFERENCES users (id);
+
+ALTER TABLE points ADD CONSTRAINT points_circuit FOREIGN KEY points_circuit (circuits_id)
+    REFERENCES circuits (id);

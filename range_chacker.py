@@ -78,7 +78,6 @@ class Line:
 
 
 class InsideChecker:
-
     def check(self, circuit, point):
         lines = []
         prev_p = None
